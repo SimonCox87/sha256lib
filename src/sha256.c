@@ -39,13 +39,13 @@ static SHA256_CTX ctx;
 static void create_block(const uint8_t *message, uint32_t *block);
 static void process(uint8_t *data);
 // Bit manipulation functions
-static uint32_t Ch(uint32_t x, uint32_t y, uint32_t z);
-static uint32_t Maj(uint32_t x, uint32_t y, uint32_t z);
-static uint32_t Rotr(uint32_t w, int n);
-static uint32_t big_sigma0(uint32_t x);
-static uint32_t big_sigma1(uint32_t x);
-static uint32_t small_sigma0(uint32_t x);
-static uint32_t small_sigma1(uint32_t x);
+static inline uint32_t Ch(uint32_t x, uint32_t y, uint32_t z);
+static inline uint32_t Maj(uint32_t x, uint32_t y, uint32_t z);
+static inline uint32_t Rotr(uint32_t w, int n);
+static inline uint32_t big_sigma0(uint32_t x);
+static inline uint32_t big_sigma1(uint32_t x);
+static inline uint32_t small_sigma0(uint32_t x);
+static inline uint32_t small_sigma1(uint32_t x);
 
 // Initialise function
 void sha_init(void)
@@ -137,15 +137,19 @@ void sha_final(uint32_t *hash)
         hash[i] = ctx.h[i];
 }
 
+// Refactor process block
 static void process(uint8_t *data)
 {
-    int t;
+    uint32_t t;
     uint32_t a, b, c, d, e, f, g, h, T1, T2;
 
     uint32_t block[BLOCK_WORDS] = {0};
     create_block(data, block);
+    uint32_t W[16]; //Message Schedule
 
-    uint32_t W[64]; //Message Schedule
+    for (t = 0; t < 16; t++)
+        W[t] = block[t];
+
     a = ctx.h[0];
     b = ctx.h[1];
     c = ctx.h[2];
@@ -155,21 +159,16 @@ static void process(uint8_t *data)
     g = ctx.h[6];
     h = ctx.h[7];
     
-    // Create message schedule
     for (t = 0; t < 64; t++) {
-        if (t < 16)
-            W[t] = block[t];
-        else {
-            W[t] = small_sigma1(W[t-2]) + 
-                    W[t-7] + 
-                    small_sigma0(W[t-15]) +
-                    W[t-16];
+        // Create message schedule
+        if (t >= 16) {
+            W[t & 15] = small_sigma1(W[(t-2) & 15]) + 
+                    W[(t-7) & 15] + 
+                    small_sigma0(W[(t-15) & 15]) +
+                    W[(t-16) & 15];
         }
-    }
-
-    // Create woorking variables
-    for (t = 0; t < 64; t++) {
-        T1 = h + big_sigma1(e) + Ch(e,f,g) + K[t] + W[t];
+        // Create woorking variables
+        T1 = h + big_sigma1(e) + Ch(e,f,g) + K[t] + W[t & 15];
         T2 = big_sigma0(a) + Maj(a,b,c);
         h = g;
         g = f;
@@ -212,41 +211,38 @@ static void create_block(const uint8_t *message, uint32_t *block)
 }
 
 // Functions that build message schedule
-static uint32_t Ch(uint32_t x, uint32_t y, uint32_t z) {
+static inline uint32_t Ch(uint32_t x, uint32_t y, uint32_t z) {
     return (x & y) ^ ((~x) & z);
 }
 
-static uint32_t Maj(uint32_t x, uint32_t y, uint32_t z)
+static inline uint32_t Maj(uint32_t x, uint32_t y, uint32_t z)
 {
     return (x & y) ^ (x & z) ^ (y & z);
 }
 
 // Functions that build eight working variables (a ... h)
-static uint32_t Rotr(uint32_t x, int n)
+static inline uint32_t Rotr(uint32_t x, int n)
 {
     return ((x >> n)) | (x << (32 - n));
 }
 
-static uint32_t big_sigma0(uint32_t x)
+static inline uint32_t big_sigma0(uint32_t x)
 {
     return Rotr(x,2) ^ Rotr(x,13) ^ Rotr(x,22);
 }
 
-static uint32_t big_sigma1(uint32_t x)
+static inline uint32_t big_sigma1(uint32_t x)
 {
     return Rotr(x,6) ^ Rotr(x,11) ^ Rotr(x,25);
 }
 
-static uint32_t small_sigma0(uint32_t x)
+static inline uint32_t small_sigma0(uint32_t x)
 {
     return Rotr(x,7) ^ Rotr(x,18) ^ (x >> 3);
 }
 
-static uint32_t small_sigma1(uint32_t x)
+static inline uint32_t small_sigma1(uint32_t x)
 {
     return Rotr(x,17) ^ Rotr(x,19) ^ (x >> 10);
 }
 
-/* 
-    Try and optimise sha_update and process functions
-*/
