@@ -41,4 +41,6 @@ int main()
     Hash test:
     file: ubuntu-24.04.3-desktop-amd64.iso 
     hash: faabcf33ae53976d2b8207a001ff32f4e5daae013505ac7188c9ea63988f8328
+
+    // Add more tests
 */
