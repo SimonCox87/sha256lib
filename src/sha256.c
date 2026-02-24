@@ -1,4 +1,4 @@
-#include "../include/sha256.h" 
+#include "../include/sha.h" 
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -47,8 +47,8 @@ static inline uint32_t big_sigma1(uint32_t x);
 static inline uint32_t small_sigma0(uint32_t x);
 static inline uint32_t small_sigma1(uint32_t x);
 
-// Initialise function
-void sha_init(void)
+// Initialise context state struct
+void sha256_init(void)
 {
     ctx.h[0] = H[0];
     ctx.h[1] = H[1]; 
@@ -63,7 +63,8 @@ void sha_init(void)
     memset(ctx.buffer, 0, 64);
 }
 
-void sha_update(const uint8_t *data, size_t len)
+// Process the blocks
+void sha256_update(const uint8_t *data, size_t len)
 {  
     ctx.total_len += len;
 
@@ -93,17 +94,10 @@ void sha_update(const uint8_t *data, size_t len)
         memcpy(ctx.buffer, data, len);
         ctx.buffer_len = len;
     }
-
-
 }
 
-/*******************************************************************
- *  padded_messaging: function takes message and the length of the *
- *  message (measured in number of chars) and returns the 64       *
- *  (512 bit) block                                                *
- *******************************************************************/
-
-void sha_final(uint32_t *hash)
+// Build and process final block(s)
+void sha256_final(uint32_t *hash)
 {
     int i, byte_set = 0;
     int len = ctx.buffer_len;
@@ -137,7 +131,7 @@ void sha_final(uint32_t *hash)
         hash[i] = ctx.h[i];
 }
 
-// Refactor process block
+// Process a block
 static void process(uint8_t *data)
 {
     uint32_t t;
@@ -160,13 +154,13 @@ static void process(uint8_t *data)
     h = ctx.h[7];
     
     for (t = 0; t < 64; t++) {
-        // Create message schedule
         if (t >= 16) {
             W[t & 15] = small_sigma1(W[(t-2) & 15]) + 
-                    W[(t-7) & 15] + 
-                    small_sigma0(W[(t-15) & 15]) +
-                    W[(t-16) & 15];
+                        W[(t-7) & 15] + 
+                        small_sigma0(W[(t-15) & 15]) +
+                        W[(t-16) & 15];
         }
+
         // Create woorking variables
         T1 = h + big_sigma1(e) + Ch(e,f,g) + K[t] + W[t & 15];
         T2 = big_sigma0(a) + Maj(a,b,c);
@@ -190,12 +184,7 @@ static void process(uint8_t *data)
     ctx.h[7] += h;
 }
 
-/***************************************************************** 
- *  create_block: takes as it's argument a pointer to an array   *
- *  containing uint8_t numbers and returns a big_endian uint32_t *
- *  block. function called 8 times to produce 8 32 bit blocks    *
- *****************************************************************/
-
+// create a block
 static void create_block(const uint8_t *message, uint32_t *block)
 {
     int b, w;
@@ -220,7 +209,7 @@ static inline uint32_t Maj(uint32_t x, uint32_t y, uint32_t z)
     return (x & y) ^ (x & z) ^ (y & z);
 }
 
-// Functions that build eight working variables (a ... h)
+// Rotation functions
 static inline uint32_t Rotr(uint32_t x, int n)
 {
     return ((x >> n)) | (x << (32 - n));

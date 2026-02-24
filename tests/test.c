@@ -1,4 +1,4 @@
-#include "../include/sha256.h"
+#include "../include/sha.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -19,14 +19,14 @@ int main()
         return -1;
     }
 
-    sha_init();
+    sha256_init();
 
     size_t n;
     while ((n = fread(buffer, 1, sizeof(buffer), fp)) > 0) {
-        sha_update(buffer, n);
+        sha256_update(buffer, n);
     }
 
-    sha_final(hash_buffer);
+    sha256_final(hash_buffer);
 
     printf("hashed message: ");
     for (i = 0; i < 8; i++)
