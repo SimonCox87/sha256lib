@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 // Used in Process function - circular queue
-
 #define MASK 0x0F
 
 // H constants
@@ -97,13 +96,6 @@ void sha1_final(uint32_t *hash)
         sha1_256_pad(ctx.buffer_len, ctx.total_len, ctx.buffer, b_set);
         process(ctx.buffer);
     }
-
-    // for (i = 0; i < 64; i++) {
-    //     if (i && (i % 8 == 0)) 
-    //         printf("\n");
-
-    //     printf("%.8x ", ctx.buffer[i]);
-    // }
     
     for (i = 0; i < 5; i++) 
         hash[i] = ctx.h[i];
@@ -140,7 +132,7 @@ static void process(uint8_t *data)
         }
 
         // Create working variables
-        // Generate T value
+        // Generate temp (T) value
         if (t >= 0 && t <= 19)
             T = Rotl(a,5) + Ch(b,c,d) + e + K[0] + W[t & MASK];
         if (t >= 20 && t <= 39)
