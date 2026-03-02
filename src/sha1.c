@@ -5,6 +5,10 @@
 #include <string.h>
 #include <stdio.h>
 
+// Used in Process function - circular queue
+
+#define MASK 0x0F
+
 // H constants
 static const uint32_t H[5] = {
     0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0
@@ -27,10 +31,11 @@ typedef struct {
 static SHA1_CTX ctx;
 
 // Preprocessing Functions
-static void create_block(const uint8_t *message, uint32_t *block);
 static void process(uint8_t *data);
 
 // Bit manipulation functions
+static inline uint32_t Parity(uint32_t x, uint32_t y, uint32_t z);
+static inline uint32_t Rotl(uint32_t x, int n);
 
 // Initialise context state struct
 void sha1_init(void)
@@ -81,9 +86,26 @@ void sha1_update(const uint8_t *data, size_t len)
 // Build and process final block(s)
 void sha1_final(uint32_t *hash)
 {
-    int i;
+    int i, b_set = 0;
+
+    sha1_256_pad(ctx.buffer_len, ctx.total_len, ctx.buffer, b_set);
+    process(ctx.buffer);
+
+    if (ctx.buffer_len >= 56) {
+        b_set = 1;
+        ctx.buffer_len = 0;
+        sha1_256_pad(ctx.buffer_len, ctx.total_len, ctx.buffer, b_set);
+        process(ctx.buffer);
+    }
+
+    // for (i = 0; i < 64; i++) {
+    //     if (i && (i % 8 == 0)) 
+    //         printf("\n");
+
+    //     printf("%.8x ", ctx.buffer[i]);
+    // }
     
-    for (i = 0; i < 8; i++) 
+    for (i = 0; i < 5; i++) 
         hash[i] = ctx.h[i];
 }
 
@@ -91,10 +113,10 @@ void sha1_final(uint32_t *hash)
 static void process(uint8_t *data)
 {
     uint32_t t;
-    uint32_t a, b, c, d, e, f, g, h, T1, T2;
+    uint32_t a, b, c, d, e, T;
 
     uint32_t block[16] = {0};
-    create_block(data, block);
+    parse_message_1_256(data, block);
     uint32_t W[16]; //Message Schedule
 
     for (t = 0; t < 16; t++)
@@ -105,37 +127,52 @@ static void process(uint8_t *data)
     c = ctx.h[2];
     d = ctx.h[3];
     e = ctx.h[4];
-    f = ctx.h[5];
-    g = ctx.h[6];
-    h = ctx.h[7];
     
-    for (t = 0; t < 64; t++) {
+    for (t = 0; t < 80; t++) {
         if (t >= 16) {
-            W[t & 15] = small_sigma1(W[(t-2) & 15]) + 
-                        W[(t-7) & 15] + 
-                        small_sigma0(W[(t-15) & 15]) +
-                        W[(t-16) & 15];
+          W[t & MASK] = 
+            Rotl(
+                W[(t - 3)  & MASK] ^ 
+                W[(t - 8)  & MASK] ^
+                W[(t - 14) & MASK] ^
+                W[(t - 16) & MASK],
+            1);
         }
 
-        // Create woorking variables
-        T1 = h + big_sigma1(e) + Ch(e,f,g) + K[t] + W[t & 15];
-        T2 = big_sigma0(a) + Maj(a,b,c);
-        h = g;
-        g = f;
-        f = e;
-        e = d + T1;
+        // Create working variables
+        // Generate T value
+        if (t >= 0 && t <= 19)
+            T = Rotl(a,5) + Ch(b,c,d) + e + K[0] + W[t & MASK];
+        if (t >= 20 && t <= 39)
+            T = Rotl(a,5) + Parity(b,c,d) + e + K[1] + W[t & MASK];
+        if (t >= 40 && t <= 59)
+            T = Rotl(a,5) + Maj(b,c,d) + e + K[2] + W[t & MASK];
+        if (t >= 60 && t <= 79)
+            T = Rotl(a,5) + Parity(b,c,d) + e + K[3] + W[t & MASK];
+        
+        // Create working variables a ... e
+        e = d;
         d = c;
-        c = b;
+        c = Rotl(b, 30);
         b = a;
-        a = T1 + T2;
+        a = T;
     }
-
     ctx.h[0] += a;
     ctx.h[1] += b;
     ctx.h[2] += c;
     ctx.h[3] += d;
     ctx.h[4] += e;
-    ctx.h[5] += f;
-    ctx.h[6] += g;
-    ctx.h[7] += h;
 }
+
+// Sha1 specific function to help build message schedule
+static inline uint32_t Parity(uint32_t x, uint32_t y, uint32_t z)
+{
+    return x ^ y ^ z;
+}
+
+// Rotation functions
+static inline uint32_t Rotl(uint32_t x, int n)
+{
+    return (x << n) | (x >> (32 - n));
+}
+

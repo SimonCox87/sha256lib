@@ -3,20 +3,24 @@
 #include <string.h>
 #include <stdio.h>
 
-// Functions that build message schedule
-inline uint32_t Ch(uint32_t x, uint32_t y, uint32_t z) {
-    return (x & y) ^ ((~x) & z);
-}
-
-inline uint32_t Maj(uint32_t x, uint32_t y, uint32_t z)
+// Parsing a message
+void parse_message_1_256(const uint8_t *message, uint32_t *block)
 {
-    return (x & y) ^ (x & z) ^ (y & z);
+    int b, w;
+    uint32_t word;
+
+    for (b = 0, w = 0; b < 64; b += 4, w++) {
+        word = ((uint32_t)message[b]    << 24) | 
+               ((uint32_t)message[b+1]  << 16) |
+               ((uint32_t)message[b+2]  <<  8) |
+                (uint32_t)message[b+3];
+        block[w] = word;
+    }
 }
 
 // Padding functions - for final block
 void sha1_256_pad(uint32_t buff_len, uint64_t total_len, uint8_t *buffer, int byte_set)
 {
-    int i;
     uint32_t len = buff_len;
 
     if (len >= 56) {

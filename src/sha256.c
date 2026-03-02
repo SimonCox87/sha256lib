@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdio.h>
 
+// Used in Process function - circular queue
+#define MASK 0xF
+
 // H constants
 static const uint32_t H[8] = {
     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
@@ -34,7 +37,6 @@ typedef struct {
 static SHA256_CTX ctx;
 
 // Preprocessing Functions
-static void create_block(const uint8_t *message, uint32_t *block);
 static void process(uint8_t *data);
 // Bit manipulation functions
 static inline uint32_t Rotr(uint32_t w, int n);
@@ -118,7 +120,7 @@ static void process(uint8_t *data)
     uint32_t a, b, c, d, e, f, g, h, T1, T2;
 
     uint32_t block[16] = {0};
-    create_block(data, block);
+    parse_message_1_256(data, block);
     uint32_t W[16]; //Message Schedule
 
     for (t = 0; t < 16; t++)
@@ -135,14 +137,14 @@ static void process(uint8_t *data)
     
     for (t = 0; t < 64; t++) {
         if (t >= 16) {
-            W[t & 15] = small_sigma1(W[(t-2) & 15]) + 
-                        W[(t-7) & 15] + 
-                        small_sigma0(W[(t-15) & 15]) +
-                        W[(t-16) & 15];
+            W[t & MASK] = small_sigma1(W[(t-2) & MASK]) + 
+                          W[(t-7) & MASK] + 
+                          small_sigma0(W[(t-15) & MASK]) +
+                          W[(t-16) & MASK];
         }
 
         // Create woorking variables
-        T1 = h + big_sigma1(e) + Ch(e,f,g) + K[t] + W[t & 15];
+        T1 = h + big_sigma1(e) + Ch(e,f,g) + K[t] + W[t & MASK];
         T2 = big_sigma0(a) + Maj(a,b,c);
         h = g;
         g = f;
@@ -162,31 +164,6 @@ static void process(uint8_t *data)
     ctx.h[5] += f;
     ctx.h[6] += g;
     ctx.h[7] += h;
-}
-
-// create a block
-static void create_block(const uint8_t *message, uint32_t *block)
-{
-    int b, w;
-    uint32_t word;
-
-    for (b = 0, w = 0; b < 64; b += 4, w++) {
-        word = ((uint32_t)message[b]    << 24) | 
-               ((uint32_t)message[b+1]  << 16) |
-               ((uint32_t)message[b+2]  <<  8) |
-                (uint32_t)message[b+3];
-        block[w] = word;
-    }
-}
-
-// Functions that build message schedule
-inline uint32_t Ch(uint32_t x, uint32_t y, uint32_t z) {
-    return (x & y) ^ ((~x) & z);
-}
-
-inline uint32_t Maj(uint32_t x, uint32_t y, uint32_t z)
-{
-    return (x & y) ^ (x & z) ^ (y & z);
 }
 
 // Rotation functions
