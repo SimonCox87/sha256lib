@@ -1,5 +1,5 @@
 #include "../include/sha.h"
-#include "../include/sha_common.h"
+#include "internal.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -25,16 +25,8 @@ static const uint32_t K[64] = {
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-// hash state struct 
-typedef struct {
-    uint32_t h[8]; // current hash state (H0 .. H7)
-    uint64_t total_len; // total message length in bytes
-    uint8_t buffer[64]; // stores partial block
-    uint32_t buffer_len; // number of bytes currently in buffer
-} SHA256_CTX ;
-
 // Initialise hash state variable
-static SHA256_CTX ctx;
+static sha256_ctx ctx;
 
 // Preprocessing Functions
 static void process(uint8_t *data);
@@ -99,16 +91,16 @@ void sha256_final(uint32_t *hash)
 {
     int i, b_set = 0;
 
-    sha1_256_pad(ctx.buffer_len, ctx.total_len, ctx.buffer, b_set);
-    process(ctx.buffer);
-
     if (ctx.buffer_len >= 56) {
+        sha256_pad(&ctx, b_set);
+        process(ctx.buffer);
         b_set = 1;
         ctx.buffer_len = 0;
-        sha1_256_pad(ctx.buffer_len, ctx.total_len, ctx.buffer, b_set);
-        process(ctx.buffer);
     }
-    
+
+    sha256_pad(&ctx, b_set);
+    process(ctx.buffer);
+
     for (i = 0; i < 8; i++) 
         hash[i] = ctx.h[i];
 }

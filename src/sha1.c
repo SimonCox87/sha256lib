@@ -1,6 +1,6 @@
 // Source code for sha1
-#include <../include/sha.h>
-#include <sha_common.h>
+#include "../include/sha.h"
+#include "internal.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -18,16 +18,9 @@ static const uint32_t K[4] = {
     0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6
 };
 
-// hash state struct 
-typedef struct {
-    uint32_t h[5]; // current hash state (H0 .. H4)
-    uint64_t total_len; // total message length in bytes
-    uint8_t buffer[64]; // stores partial block
-    uint32_t buffer_len; // number of bytes currently in buffer
-} SHA1_CTX ;
 
 // Initialise hash state variable
-static SHA1_CTX ctx;
+static sha1_ctx ctx;
 
 // Preprocessing Functions
 static void process(uint8_t *data);
@@ -87,13 +80,13 @@ void sha1_final(uint32_t *hash)
 {
     int i, b_set = 0;
 
-    sha1_256_pad(ctx.buffer_len, ctx.total_len, ctx.buffer, b_set);
+    sha1_pad(&ctx, b_set);
     process(ctx.buffer);
 
     if (ctx.buffer_len >= 56) {
         b_set = 1;
         ctx.buffer_len = 0;
-        sha1_256_pad(ctx.buffer_len, ctx.total_len, ctx.buffer, b_set);
+        sha1_pad(&ctx, b_set);
         process(ctx.buffer);
     }
     

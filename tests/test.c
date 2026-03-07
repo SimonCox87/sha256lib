@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 
-// #define BUFF_LIMIT 4096
-#define BUFF_LIMIT 262144
+#define BUFF_LIMIT 4096
+// #define BUFF_LIMIT 262144
 
 int main()
 {
@@ -69,7 +69,7 @@ int main()
     printf("\n"); */
 
     /* Test 5 SHA-256 'abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq' */
-    /* int i;
+    /*int i;
     const uint8_t message[56] = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
     uint32_t hash_buffer[8] = {0};
 
@@ -81,10 +81,10 @@ int main()
     printf("hashed message: ");
     for (i = 0; i < 8; i++)
         printf("%08x", hash_buffer[i]);
-    printf("\n");  */
+    printf("\n"); */
 
     /* Test 6 - SHA-256 'a' x 1,000,000 */
-    /* int i;
+    /*int i;
     uint8_t message[1000000];
     uint32_t hash_buffer[8] = {0};
 
@@ -97,11 +97,10 @@ int main()
 
     printf("hashed message: ");
     for (i = 0; i < 8; i++)
-        printf("%08x", hash_buffer[i]);
-    printf("\n"); */
+        printf("%08x\n", hash_buffer[i]); */
 
     /* Test 7 SHA-256 Hashing file: ubuntu-24.04.3-desktop-amd64.iso  */
-    /* int i;
+    /*int i;
     uint32_t hash_buffer[8] = {0};
     uint8_t buffer[BUFF_LIMIT] = {0};
     FILE *fp;
@@ -127,16 +126,16 @@ int main()
         printf("%08x", hash_buffer[i]);
     printf("\n");
 
-    fclose(fp); */
+    fclose(fp);  */
     return 0;
 }
 
-/* 
+/*
     Test 1: a9993e364706816aba3e25717850c26c9cd0d89d
     Test 2: 84983e441c3bd26ebaae4aa1f95129e5e54670f1
     Test 3: 34aa973cd4c4daa4f61eeb2bdbad27316534016f
     Test 4: ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
     Test 5: 248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1
     Test 6: cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0
-    Test 7: faabcf33ae53976d2b8207a001ff32f4e5daae013505ac7188c9ea63988f8328 
+    Test 7: faabcf33ae53976d2b8207a001ff32f4e5daae013505ac7188c9ea63988f8328
 */
