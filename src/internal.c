@@ -79,18 +79,32 @@ void sha256_pad(sha256_ctx *ctx, int byte_set)
     }
 }
 
-// void sha_384_512_pad(uint32_t buff_len, uint64_t len_high, uint64_t len_low, uint8_t *buffer, int byte_set)
-// {
-//     uint32_t len = buff_len;
+void sha512_pad(sha512_ctx *ctx, int byte_set)
+{
+    uint32_t len = ctx->buffer_len;
 
-//     if (len >= 128) {
-//         buffer[len] = 0x80;
-//     } else {
-//         memset(buffer + len, 0, 128 - len);
-//         if (!byte_set) buffer[len] = 0x80;
-//         uint64_t bit_len = len_low * 8;
-//         buffer[112];
-
-
-//     }
-// }
+    if (len >= 112) {
+        ctx->buffer[len] = 0x80;
+    } else {
+        memset(ctx->buffer + len, 0, 128 - len);
+        if (!byte_set) ctx->buffer[len] = 0x80;
+        uint64_t len_high = ctx->high_len * 8;
+        ctx->buffer[112] = (len_high >> 56) & 0xFF;
+        ctx->buffer[113] = (len_high >> 48) & 0xFF;
+        ctx->buffer[114] = (len_high >> 40) & 0xFF;
+        ctx->buffer[115] = (len_high >> 32) & 0xFF;
+        ctx->buffer[116] = (len_high >> 24) & 0xFF;
+        ctx->buffer[117] = (len_high >> 16) & 0xFF;
+        ctx->buffer[118] = (len_high >> 8)  & 0xFF;
+        ctx->buffer[119] =  len_high        & 0xFF;
+        uint64_t len_low = ctx->low_len * 8;
+        ctx->buffer[120] = (len_low >> 56) & 0xFF;
+        ctx->buffer[121] = (len_low >> 48) & 0xFF;
+        ctx->buffer[122] = (len_low >> 40) & 0xFF;
+        ctx->buffer[123] = (len_low >> 32) & 0xFF;
+        ctx->buffer[124] = (len_low >> 24) & 0xFF;
+        ctx->buffer[125] = (len_low >> 16) & 0xFF;
+        ctx->buffer[126] = (len_low >> 8)  & 0xFF;
+        ctx->buffer[127] =  len_low        & 0xFF;
+    }
+}

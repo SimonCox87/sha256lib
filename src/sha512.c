@@ -40,17 +40,8 @@ static const uint64_t K[80] = {
     0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817
 };
 
-// hash state struct
-typedef struct {
-    uint64_t h[8]; // current hash state (H0 .. H7)
-    uint64_t high_len; // high and low required to store full 128 bit length
-    uint64_t low_len;
-    uint8_t buffer[128]; // stores partial block
-    uint32_t buffer_len; // number of bytes currently in buffer
-} SHA256_CTX ;
-
 // Initialise hash state variable
-static SHA256_CTX ctx;
+static sha512_ctx ctx;
 
 // Preprocessing functions
 static void process(uint8_t *data);
@@ -77,9 +68,8 @@ void sha512_init(void)
 // Process the blocks
 void sha512_update(const uint8_t *data, size_t len)
 {
-    if (ctx.low_len + len > MAX_INT) {
+    if (ctx.low_len + len > MAX_INT)
         ctx.high_len++;
-    }
     ctx.low_len += len;
 
     if (ctx.buffer_len > 0) {
@@ -113,14 +103,83 @@ void sha512_update(const uint8_t *data, size_t len)
 // Build and process final block(s)
 void sha512_final(uint64_t *hash)
 {
-    // padding function
-    // process function
+    int i, b_set = 0;
+
+    if (ctx.buffer_len >= 112) {
+        sha512_pad(&ctx, b_set);
+        process(ctx.buffer);
+        b_set = 1;
+        ctx.buffer_len = 0;
+    }
+
+    sha512_pad(&ctx, b_set);
+    process(ctx.buffer);
+
+    for (i = 0; i < 8; i++)
+        hash[i] = ctx.h[i];
 }
 
 // Process a block
 static void process(uint8_t *data)
 {
-    // parse function
+    uint64_t t;
+    uint64_t a, b, c, d, e, f, g, h, T1, T2;
+
+    uint64_t block[16] = {0};
+    parse_message_384_512(data, block);
+    // for (int i = 0; i < 16; i++) {
+    //     if (i && i % 8 == 0) printf("\n");
+    //     printf("%016lx ", block[i]);
+    // }
+    // printf("\n");
+
+    uint64_t W[16]; //Message Schedule
+
+    for (t = 0; t < 16; t++)
+        W[t] = block[t];
+
+    a = ctx.h[0];
+    b = ctx.h[1];
+    c = ctx.h[2];
+    d = ctx.h[3];
+    e = ctx.h[4];
+    f = ctx.h[5];
+    g = ctx.h[6];
+    h = ctx.h[7];
+    
+    for (t = 0; t < 80; t++) {
+        if (t >= 16) {
+            W[t & MASK] = small_sigma1_512(W[(t-2) & MASK]) + 
+                          W[(t-7) & MASK] + 
+                          small_sigma0_512(W[(t-15) & MASK]) +
+                          W[(t-16) & MASK];
+        }
+
+        // Create woorking variables
+        T1 = h + big_sigma1_512(e) + Ch_512(e,f,g) + K[t] + W[t & MASK];
+        T2 = big_sigma0_512(a) + Maj_512(a,b,c);
+        h = g;
+        g = f;
+        f = e;
+        e = d + T1;
+        d = c;
+        c = b;
+        b = a;
+        a = T1 + T2;
+
+        // printf("round %02ld: %016lx %016lx %016lx %016lx %016lx %016lx %016lx %016lx\n",
+        //        t,a,b,c,d,e,f,g,h);
+    }
+
+    // printf("\n");
+    ctx.h[0] += a;
+    ctx.h[1] += b;
+    ctx.h[2] += c;
+    ctx.h[3] += d;
+    ctx.h[4] += e;
+    ctx.h[5] += f;
+    ctx.h[6] += g;
+    ctx.h[7] += h;
 }
 
-// Rotation functions
+// Amend bit functions that construct the message schedule and bit rotation functions

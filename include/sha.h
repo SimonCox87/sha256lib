@@ -14,6 +14,6 @@ void sha256_final(uint32_t *hash);
 
 void sha512_init(void);
 void sha512_update(const uint8_t *data, size_t len);
-void sha512_final(uint32_t *hash);
+void sha512_final(uint64_t *hash);
 
 #endif
