@@ -8,7 +8,7 @@ typedef struct {
     uint64_t total_len; // total message length in bytes
     uint8_t buffer[64]; // stores partial block
     uint32_t buffer_len; // number of bytes currently in buffer
-} sha1_ctx;
+} sha1_ctx ;
 
 // sha256 hash state struct
 typedef struct {
@@ -16,7 +16,7 @@ typedef struct {
     uint64_t total_len;
     uint8_t buffer[64];
     uint32_t buffer_len;
-} sha256_ctx;
+} sha256_ctx ;
 
 // sha512 hash state struct
 typedef struct {
@@ -26,6 +26,9 @@ typedef struct {
     uint8_t buffer[128];
     uint32_t buffer_len;
 } sha512_ctx ;
+
+// sha384 hash state struct
+typedef sha512_ctx sha384_ctx;
 
 // Common rotation algorithms that build message schedule SHA1 and SHA256
 static inline uint32_t Ch(uint32_t x, uint32_t y, uint32_t z) {

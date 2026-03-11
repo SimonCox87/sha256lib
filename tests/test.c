@@ -174,6 +174,66 @@ int main()
         printf("%016lx", hash_buffer[i]);
     printf("\n"); */
 
+    /* Test 11 - Test Carry over - Final length 128 bits */
+    /* First set low bit to 0xfffffffffffffff0  */
+    /* Then process 32 bits - message = "abcd" */
+    /* int i;
+    uint8_t message[4] = "abcd";
+    uint64_t hash_buffer[8] = {0};
+
+    sha512_init();
+    sha512_update(message, sizeof(message));
+    sha512_final(hash_buffer);
+
+    printf("hashed message: ");
+    for (i = 0; i < 8; i++)
+        printf("%016lx", hash_buffer[i]);
+    printf("\n"); */
+
+    /* Test 12 - SHA-384 "abc" */
+    /* int i;
+    uint8_t message[3] = "abc";
+    uint64_t hash_buffer[6] = {0};
+
+    sha384_init();
+    sha384_update(message, sizeof(message));
+    sha384_final(hash_buffer);
+
+    printf("hashed message: ");
+    for (i = 0; i < 6; i++)
+        printf("%016lx", hash_buffer[i]);
+    printf("\n"); */
+
+    /* Test 13 - SHA-384 "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu" */
+    /* int i;
+    uint8_t message[112] = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu";
+    uint64_t hash_buffer[6] = {0};
+
+    sha384_init();
+    sha384_update(message, sizeof(message));
+    sha384_final(hash_buffer);
+
+    printf("hashed message: ");
+    for (i = 0; i < 6; i++)
+        printf("%016lx", hash_buffer[i]);
+    printf("\n"); */
+
+    /* Test 14 -  SHA-384 'a' x 1,000,000 */
+    /* int i;
+    uint8_t message[1000000];
+    uint64_t hash_buffer[6] = {0};
+
+    for (i = 0; i < 1000000; i++)
+        message[i] = 'a';
+
+    sha384_init();
+    sha384_update(message, sizeof(message));
+    sha384_final(hash_buffer);
+
+    printf("hashed message: ");
+    for (i = 0; i < 6; i++)
+        printf("%016lx", hash_buffer[i]);
+    printf("\n"); */
     return 0;
 }
 
@@ -191,4 +251,11 @@ int main()
              501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909
     Test 10: e718483d0ce769644e2e42c7bc15b4638e1f98b13b2044285632a803afa973eb
              de0ff244877ea60a4cb0432ce577c31beb009c5c2c49aa2e4eadb217ad8cc09b
+    Test 11: ctx.high_len = 0000000000000001 ctx.low_len = 0000000000000003
+    Test 12: cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed
+             8086072ba1e7cc2358baeca134c825a7
+    Test 13: 09330c33f71147e83d192fc782cd1b4753111b173b3b05d22fa08086e3b0f712
+             fcc7c71a557e2db966c3e9fa91746039
+    Test 14: 9d0e1809716474cb086e834e310a4a1ced149e9c00f248527972cec5704c2a5b
+             07b8b3dc38ecc4ebae97ddd87f3d8985
 */

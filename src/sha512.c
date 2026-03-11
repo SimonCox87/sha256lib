@@ -7,9 +7,6 @@
 // Used in Process function - circular queue
 #define MASK 0xF
 
-// Max for 64 bit unisigned int (2^64 - 1)
-#define MAX_INT 0xFFFFFFFFFFFFFFFF
-
 // H constants
 static const uint64_t H[8] = {
     0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
@@ -46,8 +43,6 @@ static sha512_ctx ctx;
 // Preprocessing functions
 static void process(uint8_t *data);
 
-// Bit manipulation functions
-
 // Initialise context state variable
 void sha512_init(void)
 {
@@ -68,9 +63,9 @@ void sha512_init(void)
 // Process the blocks
 void sha512_update(const uint8_t *data, size_t len)
 {
-    if (ctx.low_len + len > MAX_INT)
-        ctx.high_len++;
     ctx.low_len += len;
+    if (ctx.low_len < len)
+        ctx.high_len++;
 
     if (ctx.buffer_len > 0) {
         size_t space = 128 - ctx.buffer_len;
@@ -127,11 +122,6 @@ static void process(uint8_t *data)
 
     uint64_t block[16] = {0};
     parse_message_384_512(data, block);
-    // for (int i = 0; i < 16; i++) {
-    //     if (i && i % 8 == 0) printf("\n");
-    //     printf("%016lx ", block[i]);
-    // }
-    // printf("\n");
 
     uint64_t W[16]; //Message Schedule
 
@@ -166,12 +156,8 @@ static void process(uint8_t *data)
         c = b;
         b = a;
         a = T1 + T2;
-
-        // printf("round %02ld: %016lx %016lx %016lx %016lx %016lx %016lx %016lx %016lx\n",
-        //        t,a,b,c,d,e,f,g,h);
     }
 
-    // printf("\n");
     ctx.h[0] += a;
     ctx.h[1] += b;
     ctx.h[2] += c;
@@ -182,4 +168,3 @@ static void process(uint8_t *data)
     ctx.h[7] += h;
 }
 
-// Amend bit functions that construct the message schedule and bit rotation functions
